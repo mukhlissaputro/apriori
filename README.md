@@ -1,4 +1,4 @@
-# Market Basket Anlysis Dengan Metode Apriori
+# Market Basket Analysis Dengan Metode Apriori
 Program Apriori Untuk Memenuhi Nilai UAS Matematika Lanjutan
 
 Selamat datang!! 
