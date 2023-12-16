@@ -23,6 +23,6 @@ Lanjutkan langkah berikutnya untuk menjalankan demo:
 Selamat belajar :)
 
 Contoh Tampilan
-![alt text](https://github.com/mukhlissaputro/apriori/apriori_1.png?raw=true)
-![alt text](https://github.com/mukhlissaputro/apriori/apriori_2.png?raw=true)
-![alt text](https://github.com/mukhlissaputro/apriori/apriori_3.png?raw=true)
+![alt text](https://github.com/mukhlissaputro/apriori/blob/main/apriori_1.png)
+![alt text](https://github.com/mukhlissaputro/apriori/blob/main/apriori_2.png)
+![alt text](https://github.com/mukhlissaputro/apriori/blob/main/apriori_3.png)
