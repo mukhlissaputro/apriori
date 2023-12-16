@@ -1,4 +1,4 @@
-# apriori
+# Market Basket Anlysis Dengan Metode Apriori
 Program Apriori Untuk Memenuhi Nilai UAS Matematika Lanjutan
 
 Selamat datang!! 
@@ -21,3 +21,8 @@ Lanjutkan langkah berikutnya untuk menjalankan demo:
 6. Done!!
 
 Selamat belajar :)
+
+Contoh Tampilan
+![alt text](https://github.com/mukhlissaputro/apriori/apriori_1.png?raw=true)
+![alt text](https://github.com/mukhlissaputro/apriori/apriori_2.png?raw=true)
+![alt text](https://github.com/mukhlissaputro/apriori/apriori_3.png?raw=true)
