@@ -26,15 +26,25 @@ $data_produk = [];
 
 /* 1. Membuat terlebih dahulu data set menjadi sebuah array yang berstruktur:*/
 
-$query_data_item = mysqli_query($connection,"SELECT Transaction_ID, Product, City, Customer_Category, Payment_Method FROM `datacleansing` WHERE `Date` LIKE '%2022-12-%' AND `Promotion` LIKE '%None%' AND `Discount_Applied` LIKE '%False%'") or die ('GAGAL');
-//$query_data_item = mysql_query("SELECT * FROM table_apriori_q1 ") or die ('GAGAL');
+$query_data_item = mysqli_query($connection,"SELECT Transaction_ID, Product, Total_Items, City, Promotion, Payment_Method FROM `datacleansing` WHERE `City` LIKE '%Los Angeles%' AND `Promotion` LIKE '%None%' AND `Discount_Applied` LIKE '%False%' AND `Season` = 'Summer'") or die ('GAGAL');
+// AND `Discount_Applied` LIKE '%False%' AND `Date` LIKE '%2022-12%' AND `Promotion` LIKE '%Discount on Selected Items%'  AND `Date` LIKE '%2022-12%'
 while($p = mysqli_fetch_array($query_data_item)){
-    $data = array("id" => $p['Transaction_ID'], "item" => $p['Product'], "kostumer" => $p['Customer_Category'], "city" => $p['City'], "payment" => $p['Payment_Method']);
-	array_push($data_penjualan, $data);
+
+    $data = array("id" => $p['Transaction_ID'], "item" => $p['Product'], "total" => $p['Total_Items'], "promotion" => $p['Promotion'], "city" => $p['City'], "payment" => $p['Payment_Method']);
+
+    // Pisahkan produk menjadi array menggunakan koma sebagai pemisah
+    $productArray = explode(', ', $p['Product']);
+    $total_items = $p['Total_Items'];
+    
+    if (count($productArray) >= $panjang_itemset) {     // Jika jumlah produk dalam satu transaksi lebih dari 2 dst maka.. 
+        if ($total_items == count($productArray) ) {     // Jika jumlah Total_Items lebih besar dari atau sama dengan jumlah produk maka.. 
+            array_push($data_penjualan, $data);
+        }
+    }
+
 }
 
 /* 2. Memecah setiap produk dalam satu penjualan pada dataset, kemudian mencari berapa kali produk tersebut muncul pada dataset  */
-
 for ($i = 0; $i < count($data_penjualan); $i++) {
     $ar = [];
     $val = explode(",", $data_penjualan[$i]["item"]);
@@ -64,7 +74,6 @@ function frekuensiItem($data)
 
 
 /* 4. Melakukan Pengecekan Support setiap produk */
-
 function eliminasiItem($data, $data_penjualan, $minSupport)
 {
     $data_produk = [];
@@ -76,7 +85,7 @@ function eliminasiItem($data, $data_penjualan, $minSupport)
     return $data_produk;
 }
 
-/* 6. Pembentukan Itemset Kandidat: */
+/* 5. Pembentukan Itemset Kandidat: */
 function getItemsetKandidat($data_produk, $panjang_itemset, $dataEliminasi)
 {
     $itemset_kandidat = [];
@@ -108,7 +117,7 @@ function getItemsetKandidat($data_produk, $panjang_itemset, $dataEliminasi)
 }
 
 
-/* 7. Generasi Aturan Asosiasi: */
+/* 6. Generasi Aturan Asosiasi: */
 function generateAturanAsosiasi($itemset_kandidat, $data_produk, $minConfidence, $data_produkeliminasi, $minLift)
 {
     $aturan_asosiasi = [];
@@ -182,9 +191,10 @@ function countItemset($itemset, $data_produk, $dataEliminasi)
         <script type="text/javascript">
             $(document).ready( function () {
                 $('#tabel_dataset').DataTable();
-                $('#tabel_frekuensi1').DataTable();
-                $('#tabel_eliminasi1').DataTable();
-                $('#tabel_hasil').DataTable();
+                $('#tabel_frekuensi').DataTable();
+                $('#tabel_eliminasi').DataTable();
+                $('#tabel_confidence').DataTable();
+                $('#tabel_lift').DataTable();
             });
         </script>
     </head>
@@ -206,8 +216,8 @@ function countItemset($itemset, $data_produk, $dataEliminasi)
                             <tr>
                                 <th>No</th>
                                 <th>Nama Produk</th>
-                                <th>Kostumer</th>
-                                <th>Payment</th>
+                                <th>Total</th>
+                                <th>Promotion</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -216,8 +226,8 @@ function countItemset($itemset, $data_produk, $dataEliminasi)
                                 echo ("<tr>");
                                 echo ("<td class='text-center'>" . $data_penjualan[$i]["id"] . "</td>");
                                 echo ("<td>" . $data_penjualan[$i]["item"] . "</td>");
-                                echo ("<td>" . $data_penjualan[$i]["kostumer"] . "</td>");
-                                echo ("<td>" . $data_penjualan[$i]["payment"] . "</td>");
+                                echo ("<td>" . $data_penjualan[$i]["total"] . "</td>");
+                                echo ("<td>" . $data_penjualan[$i]["promotion"] . "</td>");
                                 echo ("</tr>");
                             }
                             ?>
@@ -227,11 +237,11 @@ function countItemset($itemset, $data_produk, $dataEliminasi)
                         <table style="text-align: left; width: 100%;">
                             <tr>
                                 <td width="13%">
-                                    <label for="confidence">Confidence</label>
+                                    <label for="jumlah_itemset">Jumlah Itemset</label>
                                 </td>
                                 <td width="2%">:</td>
                                 <td width="25%">
-                                    <input type="number" step="0.1" max = "1" name="confidence" id="confidence" required>
+                                    <input type="number" name="jumlah_itemset" id="jumlah_itemset" min="2" required>
                                 </td>
                                 <td width="13%">
                                     <label for="suppport">Support</label>
@@ -248,18 +258,18 @@ function countItemset($itemset, $data_produk, $dataEliminasi)
                             </tr>
                             <tr>
                                 <td width="13%">
+                                    <label for="confidence">Confidence</label>
+                                </td>
+                                <td width="2%">:</td>
+                                <td width="25%">
+                                    <input type="number" step="0.1" max = "1" name="confidence" id="confidence" required>
+                                </td>
+                                <td width="13%">
                                     <label for="lift">Lift</label>
                                 </td>
                                 <td width="2%">:</td>
                                 <td width="25%">
                                     <input type="number" step="0.1" max = "1" name="lift" id="lift" required>
-                                </td>
-                                <td width="13%">
-                                    <label for="jumlah_itemset">Jumlah Itemset</label>
-                                </td>
-                                <td width="2%">:</td>
-                                <td width="25%">
-                                    <input type="number" name="jumlah_itemset" id="jumlah_itemset" min="2" required>
                                 </td>
                             </tr>
                         </table>
@@ -271,7 +281,7 @@ function countItemset($itemset, $data_produk, $dataEliminasi)
             <div class="col-md-8" style="margin: 10px auto; background:white;padding:2em;border-radius:5px;">    
                 <h5 class="mb-3 font-weight-normal" style="margin-bottom:0.5em;">1. HITUNG DATA FREKUENSI PENJUALAN SETIAP PRODUK</h5>
                 <hr>
-                <table id="tabel_frekuensi1" class="table table-bordered table-earning">
+                <table id="tabel_frekuensi" class="table table-bordered table-earning">
                     <thead>
                         <tr>
                             <th>Nama Produk</th>
@@ -296,11 +306,19 @@ function countItemset($itemset, $data_produk, $dataEliminasi)
             <div class="col-md-8" style="margin: 10px auto; background:white;padding:2em;border-radius:5px;">    
                 <h5 class="mb-3 font-weight-normal" style="margin-bottom:0.5em;">2. ELIMINASI PRODUK YANG MEMILIKI FREKUENSI DIBAWAH SUPPORT</h5>
                 <hr>
-                <table id="tabel_eliminasi1" class="table table-bordered table-earning">
+                <p>
+                    Minimum item frequency didefinisikan sebagai penyaring itemset yang kurang relevan atau kurang signifikan untuk di analisis lebih lanjut (support).
+                    Secara matematis, rumus mengeliminasi produk dibawah frekuensi adalah:
+                    \[Support (S) = {n \over N}.\]
+                </p>
+                <table id="tabel_eliminasi" class="table table-bordered table-earning">
                     <thead>
                         <tr>
                             <th>Nama Produk</th>
                             <th>Frekuensi</th>
+                            <th>Minimum Support</th>
+                            <th>Nilai Variabel</th>
+                            <th>Hasil</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -311,6 +329,9 @@ function countItemset($itemset, $data_produk, $dataEliminasi)
                                     echo ("<tr>");
                                     echo ("<td>" . $key . "</td>");
                                     echo ("<td>" . $val . "</td>");
+                                    echo ("<td>" . $minSupport . "</td>");
+                                    echo ("<td>" . $val . " / " . count($data_penjualan) ."</td>");
+                                    echo ("<td>" . $val / count($data_penjualan) ."</td>");
                                     echo ("</tr>");
                                     $data_produkeliminasi[] = $key;
                             }
@@ -330,7 +351,7 @@ function countItemset($itemset, $data_produk, $dataEliminasi)
                     support itemset yang hanya terdiri dari A. Secara matematis, rumus confidence untuk aturan asosiasi "A => B" adalah:
                     \[Confidence (A => B) = {Support (AUB) \over Support (A)}.\]
                 </p>
-                <table id="tabel_hasil" class="table table-bordered table-earning">
+                <table id="tabel_confidence" class="table table-bordered table-earning">
                     <thead>
                         <tr>
                             <th>Nama Produk</th>
@@ -371,7 +392,7 @@ function countItemset($itemset, $data_produk, $dataEliminasi)
                 <br>-  Jika Lift = 1 Maka indikasi bahwa A dan B bersifat independen. Hubungan antara A dan B tidak lebih mungkin atau kurang mungkin daripada yang diharapkan secara acak.
                 <br>-  Jika Lift < 1 Maka indikasi negatif bahwa A dan B memiliki hubungan yang lebih lemah daripada yang diharapkan secara acak. Ini menunjukkan bahwa kemungkinan A dan B dibeli bersama lebih rendah daripada jika pembelian mereka bersifat independen.
                 </p>
-                <table id="tabel_hasil" class="table table-bordered table-earning">
+                <table id="tabel_lift" class="table table-bordered table-earning">
                     <thead>
                         <tr>
                             <th>Nama Produk</th>
@@ -384,7 +405,7 @@ function countItemset($itemset, $data_produk, $dataEliminasi)
                             foreach ($hasil_aturan_asosiasi as $aturan) {
                                 echo "<tr>";
                                 echo "<td> Jika membeli " . implode(', ', $aturan['left_side']) . " maka juga membeli " . implode(', ', $aturan['right_side']) . "</td>";
-                                echo "<td>" . $aturan['support_itemset'] . " / ". $aturan['support_leftside'] . " x " . $aturan['support_rightside'] ."</td>";
+                                echo "<td>" . $aturan['support_itemset'] . " / (". $aturan['support_leftside'] . " x " . $aturan['support_rightside'] .")</td>";
                                 echo "<td>" . $aturan['lift'] . "</td>";
                                 echo "</tr>";
                             }
