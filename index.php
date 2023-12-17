@@ -26,25 +26,24 @@ $data_produk = [];
 
 /* 1. Membuat terlebih dahulu data set menjadi sebuah array yang berstruktur:*/
 
-$query_data_item = mysqli_query($connection,"SELECT Transaction_ID, Product, Total_Items, City, Promotion, Payment_Method FROM `datacleansing` WHERE `City` LIKE '%Los Angeles%' AND `Promotion` LIKE '%None%' AND `Discount_Applied` LIKE '%False%' AND `Season` = 'Summer'") or die ('GAGAL');
-// AND `Discount_Applied` LIKE '%False%' AND `Date` LIKE '%2022-12%' AND `Promotion` LIKE '%Discount on Selected Items%'  AND `Date` LIKE '%2022-12%'
+$query_data_item = mysqli_query($connection,"SELECT Transaction_ID, Product, Total_Items, Total_Cost, City, Promotion, Payment_Method FROM `datacleansing` WHERE  `Promotion` LIKE '%None%' AND `Discount_Applied` LIKE '%False%' AND `City` LIKE '%San Francisco%' AND ROUND(`Total_Cost`/`Total_Items`) < 2") or die ('GAGAL');
 while($p = mysqli_fetch_array($query_data_item)){
 
-    $data = array("id" => $p['Transaction_ID'], "item" => $p['Product'], "total" => $p['Total_Items'], "promotion" => $p['Promotion'], "city" => $p['City'], "payment" => $p['Payment_Method']);
+    $data = array("id" => $p['Transaction_ID'], "item" => $p['Product'], "total" => $p['Total_Items'], "cost" => $p['Total_Cost'], "promotion" => $p['Promotion'], "city" => $p['City'], "payment" => $p['Payment_Method']);
 
     // Pisahkan produk menjadi array menggunakan koma sebagai pemisah
     $productArray = explode(', ', $p['Product']);
     $total_items = $p['Total_Items'];
     
     if (count($productArray) >= $panjang_itemset) {     // Jika jumlah produk dalam satu transaksi lebih dari 2 dst maka.. 
-        if ($total_items == count($productArray) ) {     // Jika jumlah Total_Items lebih besar dari atau sama dengan jumlah produk maka.. 
+        if ($total_items >= count($productArray) ) {     // Jika jumlah Total_Items lebih besar dari atau sama dengan jumlah produk maka.. 
             array_push($data_penjualan, $data);
         }
     }
 
 }
 
-/* 2. Memecah setiap produk dalam satu penjualan pada dataset, kemudian mencari berapa kali produk tersebut muncul pada dataset  */
+/* 2. Memecah setiap produk dalam satu penjualan pada dataset */
 for ($i = 0; $i < count($data_penjualan); $i++) {
     $ar = [];
     $val = explode(",", $data_penjualan[$i]["item"]);
@@ -55,7 +54,6 @@ for ($i = 0; $i < count($data_penjualan); $i++) {
 }
 
 /* 3. Mengecek dan menghitung jumlah produk tersebut berapa kali muncul dalam transaksi */
-
 function frekuensiItem($data)
 {
     $data_produk = [];
@@ -208,16 +206,146 @@ function countItemset($itemset, $data_produk, $dataEliminasi)
                 </a>
                 </header>
             </div>
-            <div class="col-md-8" style="margin: 10px auto; background:white;padding:2em;border-radius:5px;">        
-                <form action="" method="post">
-                    <h5 class="mb-3 font-weight-normal" style="margin-bottom:0.5em;">DATASET</h5>
+            <div class="col-md-8" style="margin: 10px auto; background:white;padding:2em;border-radius:5px;">     
+                <h5 class="mb-3 font-weight-normal" style="margin-bottom:0.5em;">DATASET</h5>
+
+                <form action="" method="post" hidden>
+                    <div class="d-flex gap-2 justify-content-center py-5">
+                        <table style="text-align: left; width: 100%;">
+                            <tr>
+                                <td width="18%">
+                                    <label for="jumlah_itemset">Payment Method</label>
+                                </td>
+                                <td width="2%">:</td>
+                                <td width="30%">
+                                    <select name="payment_method" id="payment_method" required>
+                                        <option value=""></option>
+                                        <option value="Cash">Cash</option>
+                                        <option value="Credit Card">Credit Card</option>
+                                        <option value="Debit Card">Debit Card</option>
+                                        <option value="Mobile Payment">Mobile Payment</option>
+                                    </select>
+                                </td>
+                                <td width="18%">
+                                    <label for="suppport">City</label>
+                                </td>
+                                <td width="2%">:</td>
+                                <td width="30%">
+                                    <select name="city" id="city" required>
+                                        <option value=""></option>
+                                        <option value="Atlanta">Atlanta</option>
+                                        <option value="Boston">Boston</option>
+                                        <option value="Chicago">Chicago</option>
+                                        <option value="Dallas">Dallas</option>
+                                        <option value="Houston">Houston</option>
+                                        <option value="Los Angeles">Los Angeles</option>
+                                        <option value="New York">New York</option>
+                                        <option value="San Fransisco">San Fransisco</option>
+                                        <option value="Seattle">Seattle</option>
+                                    </select>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td width="18%">
+                                    <label for="jumlah_itemset">Store Type</label>
+                                </td>
+                                <td width="2%">:</td>
+                                <td width="30%">
+                                    <select name="store_type" id="store_type" required>
+                                        <option value=""></option>
+                                        <option value="Convenience Store">Convenience Store</option>
+                                        <option value="Department Store">Department Store</option>
+                                        <option value="Pharmacy">Pharmacy</option>
+                                        <option value="Specialty Store">Specialty Store</option>
+                                        <option value="Supermarket">Supermarket</option>
+                                        <option value="Warehouse Club">Warehouse Club</option>
+                                    </select>
+                                </td>
+                                <td width="18%">
+                                    <label for="suppport">Discount Applied</label>
+                                </td>
+                                <td width="2%">:</td>
+                                <td width="30%">
+                                    <select name="discount_applied" id="discount_applied" required>
+                                        <option value=""></option>
+                                        <option value="False">No</option>
+                                        <option value="True">Yes</option>
+                                    </select>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td width="18%">
+                                    <label for="jumlah_itemset">Customer Category</label>
+                                </td>
+                                <td width="2%">:</td>
+                                <td width="30%">
+                                    <select name="customer_category" id="customer_category" required>
+                                        <option value=""></option>
+                                        <option value="Homemaker">Homemaker</option>
+                                        <option value="Middle-Aged">Middle-Aged</option>
+                                        <option value="Professional">Professional</option>
+                                        <option value="Retiree">Retiree</option>
+                                        <option value="Senior Citizen">Senior Citizen</option>
+                                        <option value="Student">Student</option>
+                                        <option value="Teenager">Teenager</option>
+                                        <option value="Young Adult">Young Adult</option>
+                                    </select>
+                                </td>
+                                <td width="18%">
+                                    <label for="suppport">Season</label>
+                                </td>
+                                <td width="2%">:</td>
+                                <td width="30%">
+                                    <select name="season" id="season" required>
+                                        <option value=""></option>
+                                        <option value="Winter">Winter</option>
+                                        <option value="Fall">Fall</option>
+                                        <option value="Summer">Summer</option>
+                                        <option value="Spring">Spring</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr><td width="18%">
+                                    <label for="jumlah_itemset">Promotion</label>
+                                </td>
+                                <td width="2%">:</td>
+                                <td width="30%">
+                                    <select name="promotion" id="promotion" required>
+                                        <option value=""></option>
+                                        <option value="BOGO">BOGO (Buy One Get One)</option>
+                                        <option value="Discount">Discount On Selected Items</option>
+                                        <option value="None">None</option>
+                                    </select>
+                                </td>
+                                <td width="18%">
+                                    <label for="jumlah_itemset">Date</label>
+                                </td>
+                                <td width="2%">:</td>
+                                <td width="30%">
+                                    <input>
+                                    <input>
+                                </td>
+                            </tr>
+                            <tr><td colspan="5"></td>
+                                <td>
+                                    <button id="btn_crtabel" name="btn_crtabel" class="btn btn-primary d-inline-flex align-items-center" type="submit">
+                                        Cari Dataset
+                                    </button>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </form>
+
                     <table id="tabel_dataset" class="table table-bordered">
                         <thead class="text-center">
                             <tr>
                                 <th>No</th>
                                 <th>Nama Produk</th>
                                 <th>Total</th>
-                                <th>Promotion</th>
+                                <th>Costs</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -227,12 +355,14 @@ function countItemset($itemset, $data_produk, $dataEliminasi)
                                 echo ("<td class='text-center'>" . $data_penjualan[$i]["id"] . "</td>");
                                 echo ("<td>" . $data_penjualan[$i]["item"] . "</td>");
                                 echo ("<td>" . $data_penjualan[$i]["total"] . "</td>");
-                                echo ("<td>" . $data_penjualan[$i]["promotion"] . "</td>");
+                                echo ("<td>" . $data_penjualan[$i]["cost"] . "</td>");
                                 echo ("</tr>");
                             }
                             ?>
                         </tbody>
-                    </table>
+                    </table>   
+
+                <form action="" method="post">
                     <div class="d-flex gap-2 justify-content-center py-5">
                         <table style="text-align: left; width: 100%;">
                             <tr>
